@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水位計測試工具</title>
+    <script src="./public/vue.js"></script>
+    <link href="./public/bootstrap.css" rel="stylesheet">
+    <script src="./public/bootstrap.js"></script>
+</head>
+
+<body class="container" id="app">
+
+    <h1 class="d-flex justify-content-center mt-4">水位計測試工具</h1>
+    
+    <div class="row d-flex justify-content-center mt-5">
+        <div class="col-10">
+            <div class="row g-3">
+                <div class="col" v-for="button in buttons" :key="button.name">
+                    <button @click="buttonClick(button.name)" :class="['btn', button.class, 'btn-lg', 'w-100']">
+                        {{ button.label }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row d-flex justify-content-center mt-4">
+        <div class="col-10">
+            <div class="bg-light border rounded p-3">
+                <h5>Last Button Clicked:</h5>
+                <p class="fs-4 text-center" v-if="lastClicked">{{ lastClicked }}</p>
+                <p class="text-muted text-center" v-else>No button clicked yet</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="./src/index.js"></script>
+</body>
+
+</html>
