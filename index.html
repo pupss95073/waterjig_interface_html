@@ -36,6 +36,48 @@
         </div>
     </div>
 
+    <!-- 掃碼輸入 Modal -->
+    <div class="modal fade" id="scanModal" tabindex="-1" aria-labelledby="scanModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scanModalLabel">掃碼輸入 - {{ currentButton }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="scanInput" class="form-label">請輸入掃碼結果：</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="scanInput" 
+                            v-model="scanInput"
+                            placeholder="請掃描或手動輸入..."
+                            @keyup.enter="saveScanData"
+                            ref="scanInputRef">
+                    </div>
+                    <div v-if="savedData.length > 0" class="mt-3">
+                        <h6>已儲存的掃碼記錄：</h6>
+                        <div class="list-group" style="max-height: 200px; overflow-y: auto;">
+                            <div v-for="(data, index) in savedData" :key="index" class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ data.button }}:</strong> {{ data.scanResult }}
+                                    <br><small class="text-muted">{{ formatTimestamp(data.timestamp) }}</small>
+                                </div>
+                                <button @click="deleteScanData(index)" class="btn btn-sm btn-outline-danger">刪除</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="saveScanData">儲存</button>
+                    <button type="button" class="btn btn-warning" @click="clearAllData">清除全部</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="./src/index.js"></script>
 </body>
 

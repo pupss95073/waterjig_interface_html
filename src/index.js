@@ -4,6 +4,10 @@
             data() {
                 return {
                     lastClicked: null, // 記錄最後點擊的按鈕
+                    currentButton: '', // 當前操作的按鈕
+                    scanInput: '', // 掃碼輸入內容
+                    savedData: [], // 儲存的掃碼數據
+                    modal: null, // Bootstrap modal 實例
                     buttons: [
                         { name: 'A', class: 'btn-primary', label: 'A' },
                         { name: 'B', class: 'btn-primary', label: 'B' },
@@ -13,15 +17,132 @@
                     ]
                 };
             },
+            mounted() {
+                // 初始化 Bootstrap modal
+                this.modal = new bootstrap.Modal(document.getElementById('scanModal'));
+                
+                // 載入本地儲存的數據
+                this.loadSavedData();
+                
+                // 監聽 modal 顯示事件，自動 focus 到輸入框
+                document.getElementById('scanModal').addEventListener('shown.bs.modal', () => {
+                    this.$refs.scanInputRef?.focus();
+                });
+            },
             methods: {
                 buttonClick(buttonName) {
                     this.lastClicked = `Button ${buttonName}`;
+                    this.currentButton = `按鈕 ${buttonName}`;
+                    this.scanInput = ''; // 清空輸入框
                     console.log(`Button ${buttonName} clicked!`);
+                    
+                    // 顯示 modal
+                    this.modal.show();
                     
                     // 使用動態方法名稱調用對應的處理函數
                     const methodName = `handleButton${buttonName}`;
                     if (this[methodName]) {
                         this[methodName]();
+                    }
+                },
+                async saveScanData() {
+                    if (!this.scanInput.trim()) {
+                        alert('請輸入掃碼結果！');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/api/scan-data', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                button: this.currentButton,
+                                scanResult: this.scanInput.trim()
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('儲存資料失敗');
+                        }
+
+                        await this.loadSavedData(); // 重新載入資料
+                        
+                        // 清空輸入框並關閉 modal
+                        this.scanInput = '';
+                        this.modal.hide();
+                    } catch (error) {
+                        console.error('儲存掃碼數據失敗：', error);
+                        alert('儲存資料時發生錯誤，請稍後再試');
+                    }
+                },
+                async deleteScanData(index) {
+                    if (confirm('確定要刪除這筆記錄嗎？')) {
+                        try {
+                            const response = await fetch(`/api/scan-data/${index}`, {
+                                method: 'DELETE'
+                            });
+
+                            if (!response.ok) {
+                                throw new Error('刪除資料失敗');
+                            }
+
+                            await this.loadSavedData(); // 重新載入資料
+                        } catch (error) {
+                            console.error('刪除掃碼數據失敗：', error);
+                            alert('刪除資料時發生錯誤，請稍後再試');
+                        }
+                    }
+                },
+                async clearAllData() {
+                    if (confirm('確定要清除所有掃碼記錄嗎？')) {
+                        try {
+                            const response = await fetch('/api/scan-data', {
+                                method: 'DELETE'
+                            });
+
+                            if (!response.ok) {
+                                throw new Error('清除資料失敗');
+                            }
+
+                            await this.loadSavedData(); // 重新載入資料
+                        } catch (error) {
+                            console.error('清除掃碼數據失敗：', error);
+                            alert('清除資料時發生錯誤，請稍後再試');
+                        }
+                    }
+                },
+                async loadSavedData() {
+                    try {
+                        const response = await fetch('/api/scan-data');
+                        if (!response.ok) {
+                            throw new Error('載入資料失敗');
+                        }
+                        this.savedData = await response.json();
+                    } catch (error) {
+                        console.error('載入掃碼數據失敗：', error);
+                        this.savedData = [];
+                    }
+                },
+                formatTimestamp(timestamp) {
+                    try {
+                        // 將 ISO 時間字串轉換為 Date 物件
+                        const date = new Date(timestamp);
+                        // 格式化為台灣時間格式
+                        return date.toLocaleString('zh-TW', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false,
+                            timeZone: 'Asia/Taipei'
+                        });
+                    } catch (error) {
+                        console.error('時間格式化失敗：', error);
+                        return timestamp; // 如果轉換失敗，直接返回原始時間字串
                     }
                 },
                 // 使用 for 迴圈動態生成按鈕處理方法
@@ -36,19 +157,19 @@
                             // 你可以根據按鈕名稱執行不同的邏輯
                             switch(button) {
                                 case 'A':
-                                    console.log('執行功能 A：初始化系統');
+                                    console.log('Button A');
                                     break;
                                 case 'B':
-                                    console.log('執行功能 B：開始處理');
+                                    console.log('Button B');
                                     break;
                                 case 'C':
-                                    console.log('執行功能 C：暫停操作');
+                                    console.log('Button C');
                                     break;
                                 case 'D':
-                                    console.log('執行功能 D：停止系統');
+                                    console.log('Button D');
                                     break;
                                 case 'E':
-                                    console.log('執行功能 E：重置設定');
+                                    console.log('Button E');
                                     break;
                             }
                         };
