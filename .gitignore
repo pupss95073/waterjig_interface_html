@@ -1,2 +1,5 @@
 node_modules
 .vscode
+# 掃碼數據目錄
+data/
+data/scan_data.json

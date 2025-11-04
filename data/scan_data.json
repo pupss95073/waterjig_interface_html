@@ -1,5 +1,10 @@
 [
   {
+    "button": "按鈕 C",
+    "scanResult": "rgr",
+    "timestamp": "2025-11-03T17:56:36.922+08:00"
+  },
+  {
     "button": "按鈕 D",
     "scanResult": "8809404925443",
     "timestamp": "2025-11-03T17:48:57.818+08:00"
