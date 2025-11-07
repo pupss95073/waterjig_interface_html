@@ -10,6 +10,7 @@ const port = process.env.PORT || 3000;
 // 全局狀態
 let buttonAEnabled = false;
 let lastStats = null;
+let isGenerating = false; // 新增忙碌標誌，防止重複觸發
 
 // GPIO 相關變數
 let Gpio;
@@ -43,6 +44,14 @@ try {
             
             // 當按鈕按下時（level = 0）開始處理
             if (level === 0) {
+                // 如果已經在生成數據中，則忽略這次觸發
+                if (isGenerating) {
+                    console.log('正在處理中，忽略此次觸發');
+                    return;
+                }
+
+                // 設置忙碌標誌
+                isGenerating = true;
                 // 禁用按鈕 A
                 buttonAEnabled = false;
                 lastStats = null;
@@ -57,6 +66,9 @@ try {
                     console.error("程式錯誤:", err);
                     buttonAEnabled = false;
                     lastStats = null;
+                } finally {
+                    // 無論成功或失敗，都要重置忙碌標誌
+                    isGenerating = false;
                 }
             }
             // 這裡可以放自定義邏輯，例如：
