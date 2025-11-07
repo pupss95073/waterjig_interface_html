@@ -18,8 +18,7 @@
         <div class="col-10">
             <div class="row g-3">
                 <div class="col" v-for="button in buttons" :key="button.name">
-                    <button @click="buttonClick(button.name)" :class="['btn', button.class, 'btn-lg', 'w-100']">
-                        {{ button.label }}
+                    <button @click="buttonClick(button.name)" :class="['btn', button.class, 'btn-lg', 'w-100']" v-html="button.label">
                     </button>
                 </div>
             </div>

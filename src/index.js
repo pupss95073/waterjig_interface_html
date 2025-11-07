@@ -2,15 +2,16 @@
 
         createApp({
             data() {
-                return {
-                    lastClicked: null, // 記錄最後點擊的按鈕
-                    currentButton: '', // 當前操作的按鈕
-                    scanInput: '', // 掃碼輸入內容
-                    savedData: [], // 儲存的掃碼數據
-                    modal: null, // Bootstrap modal 實例
-                    stats: null, // xm125測試數據
-                    buttonAEnabled: false, // 按鈕 A 的狀態
-                    buttons: [
+                    return {
+                        lastClicked: null, // 記錄最後點擊的按鈕
+                        currentButton: '', // 當前操作的按鈕
+                        scanInput: '', // 掃碼輸入內容
+                        savedData: [], // 儲存的掃碼數據
+                        modal: null, // Bootstrap modal 實例
+                        stats: null, // xm125測試數據
+                        buttonAEnabled: false, // 按鈕 A 的狀態
+                        isGenerating: false, // 是否正在生成數據
+                        buttons: [
                         { name: 'A', class: 'btn-primary', label: 'A' },
                         { name: 'B', class: 'btn-primary', label: 'B' },
                         { name: 'C', class: 'btn-primary', label: 'C' },
@@ -51,13 +52,26 @@
                             
                             // 更新按鈕 A 的狀態
                             this.buttonAEnabled = data.enabled;
+                            this.isGenerating = data.isGenerating;
+                            
+                            // 更新按鈕狀態和外觀
+                            if (this.isGenerating) {
+                                // 如果正在生成數據，顯示loading狀態
+                                this.buttons[0].class = 'btn-warning';
+                                this.buttons[0].label = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> 測試中...`; // 加入 spinner
+                            } else if (data.enabled && data.stats) {
+                                // 有測試結果時顯示綠色
+                                this.buttons[0].class = 'btn-success';
+                                this.buttons[0].label = 'A';
+                            } else {
+                                // 其他情況顯示藍色或灰色
+                                this.buttons[0].class = this.buttonAEnabled ? 'btn-primary' : 'btn-secondary';
+                                this.buttons[0].label = 'A';
+                            }
+                            
+                            // 更新測試結果
                             if (data.enabled && data.stats) {
                                 this.stats = data.stats;
-                                // 只有在有測試結果時才顯示綠色
-                                this.buttons[0].class = 'btn-success';
-                            } else {
-                                // 根據按鈕狀態顯示藍色或灰色
-                                this.buttons[0].class = this.buttonAEnabled ? 'btn-primary' : 'btn-secondary';
                             }
                         } catch (error) {
                             console.error('Error polling button status:', error);

@@ -105,7 +105,8 @@ app.get('/', (req, res) => {
 app.get('/api/button-a-status', (req, res) => {
     res.json({
         enabled: buttonAEnabled,
-        stats: lastStats
+        stats: lastStats,
+        isGenerating: isGenerating  // 加入生成狀態
     });
 });
 
