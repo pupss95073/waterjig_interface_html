@@ -8,6 +8,8 @@
                     scanInput: '', // 掃碼輸入內容
                     savedData: [], // 儲存的掃碼數據
                     modal: null, // Bootstrap modal 實例
+                    stats: null, // xm125測試數據
+                    buttonAEnabled: false, // 按鈕 A 的狀態
                     buttons: [
                         { name: 'A', class: 'btn-primary', label: 'A' },
                         { name: 'B', class: 'btn-primary', label: 'B' },
@@ -28,9 +30,44 @@
                 document.getElementById('scanModal').addEventListener('shown.bs.modal', () => {
                     this.$refs.scanInputRef?.focus();
                 });
+
+                // 開始輪詢按鈕狀態
+                this.startPolling();
+            },
+            beforeUnmount() {
+                // 清理輪詢計時器
+                if (this.pollTimer) {
+                    clearInterval(this.pollTimer);
+                }
             },
             methods: {
+                startPolling() {
+                    // 每秒檢查一次按鈕狀態
+                    this.pollTimer = setInterval(async () => {
+                        try {
+                            const response = await fetch('/api/button-a-status');
+                            if (!response.ok) throw new Error('Failed to fetch button status');
+                            const data = await response.json();
+                            
+                            // 更新按鈕 A 的狀態
+                            this.buttonAEnabled = data.enabled;
+                            if (data.enabled && data.stats) {
+                                this.stats = data.stats;
+                            }
+                            
+                            // 更新按鈕 A 的樣式
+                            this.buttons[0].class = this.buttonAEnabled ? 'btn-success' : 'btn-secondary';
+                        } catch (error) {
+                            console.error('Error polling button status:', error);
+                        }
+                    }, 1000);
+                },
                 buttonClick(buttonName) {
+                    // 如果是按鈕 A 且未啟用，則不處理
+                    if (buttonName === 'A' && !this.buttonAEnabled) {
+                        return;
+                    }
+
                     this.lastClicked = `Button ${buttonName}`;
                     this.currentButton = `按鈕 ${buttonName}`;
                     this.scanInput = ''; // 清空輸入框

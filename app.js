@@ -7,6 +7,10 @@ const app = express();
 const { generateStates } = require('./generateStates');
 const port = process.env.PORT || 3000;
 
+// 全局狀態
+let buttonAEnabled = false;
+let lastStats = null;
+
 // GPIO 相關變數
 let Gpio;
 let button;
@@ -36,13 +40,24 @@ try {
             lastTick = tick;
             buttonState = level;
             console.log(`🔘 GPIO 17 changed to ${level} at ${tick} microseconds`);
-            try {
-                const stats = await generateStates(5);
-                console.log("計算完成:", stats);
-            } catch (err) {
-                console.error("程式錯誤:", err);
-            } finally {
-                busy = false;
+            
+            // 當按鈕按下時（level = 0）開始處理
+            if (level === 0) {
+                // 禁用按鈕 A
+                buttonAEnabled = false;
+                lastStats = null;
+                
+                try {
+                    const stats = await generateStates(5);
+                    console.log("計算完成:", stats);
+                    // 儲存統計結果並啟用按鈕
+                    lastStats = stats;
+                    buttonAEnabled = true;
+                } catch (err) {
+                    console.error("程式錯誤:", err);
+                    buttonAEnabled = false;
+                    lastStats = null;
+                }
             }
             // 這裡可以放自定義邏輯，例如：
             // 執行 Modbus 測試、發送 WebSocket 事件、或呼叫內部函式
@@ -73,6 +88,15 @@ app.get('/', (req, res) => {
 });
 
 // 2. API 路由
+// 獲取按鈕狀態和xm125測試數據
+// TODO:將此api改為通用版本，json格式包含按鈕名稱與對應狀態與數據
+app.get('/api/button-a-status', (req, res) => {
+    res.json({
+        enabled: buttonAEnabled,
+        stats: lastStats
+    });
+});
+
 // 讀取掃描資料
 app.get('/api/scan-data', async (req, res) => {
     try {

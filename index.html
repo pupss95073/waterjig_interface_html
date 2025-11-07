@@ -36,6 +36,26 @@
         </div>
     </div>
 
+    <!-- xm125測試結果顯示在首頁 -->
+    <div class="row d-flex justify-content-center mt-4" v-if="stats">
+        <div class="col-10">
+            <div class="bg-light border rounded p-3">
+                <h5>測量統計結果：</h5>
+                <div class="row">
+                    <div class="col">
+                        <p><strong>平均值：</strong> {{ stats.mean.toFixed(2) }}</p>
+                        <p><strong>標準差：</strong> {{ stats.stdDev.toFixed(2) }}</p>
+                    </div>
+                    <div class="col">
+                        <p><strong>範圍：</strong> {{ stats.range.toFixed(2) }}</p>
+                        <p><strong>最大值：</strong> {{ stats.max.toFixed(2) }}</p>
+                        <p><strong>最小值：</strong> {{ stats.min.toFixed(2) }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 掃碼輸入 Modal -->
     <div class="modal fade" id="scanModal" tabindex="-1" aria-labelledby="scanModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -45,6 +65,26 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- xm125結果顯示在modal (只在按鈕A且有統計資料時顯示) -->
+                    <div v-if="currentButton === '按鈕 A' && stats" class="mb-4">
+                        <h6>本次測量統計結果：</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        <p class="mb-1"><strong>平均值：</strong> {{ stats.mean.toFixed(2) }}</p>
+                                        <p class="mb-1"><strong>標準差：</strong> {{ stats.stdDev.toFixed(2) }}</p>
+                                    </div>
+                                    <div class="col">
+                                        <p class="mb-1"><strong>範圍：</strong> {{ stats.range.toFixed(2) }}</p>
+                                        <p class="mb-1"><strong>最大值：</strong> {{ stats.max.toFixed(2) }}</p>
+                                        <p class="mb-1"><strong>最小值：</strong> {{ stats.min.toFixed(2) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="scanInput" class="form-label">請輸入掃碼結果：</label>
                         <input 
