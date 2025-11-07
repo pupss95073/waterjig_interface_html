@@ -3,6 +3,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "javascript-obfuscator": "^4.1.1",
+    "modbus-serial": "^8.0.23",
     "onoff": "^6.0.3",
     "pigpio": "^3.3.1"
   },

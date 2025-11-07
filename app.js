@@ -2,8 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
-
 const app = express();
+
+const { generateStates } = require('./generateStates');
 const port = process.env.PORT || 3000;
 
 // GPIO 相關變數
@@ -17,7 +18,7 @@ try {
     // 檢查是否為 root 使用者
     if (process.getuid && process.getuid() === 0) {
         Gpio = require('pigpio').Gpio;
-        
+
         // 設定 GPIO 17 為輸入，並啟用內部上拉電阻
         button = new Gpio(17, {
             mode: Gpio.INPUT,
@@ -26,16 +27,23 @@ try {
         });
 
         // 使用 pigpio 的 alertOnChange 來監聽腳位變化
-        button.on('alert', (level, tick) => {
+        button.on('alert', async (level, tick) => {
             // 去彈跳：忽略 10ms 內的重複觸發
             if (tick - lastTick < 10000) { // 轉換為微秒
                 return;
             }
-            
+
             lastTick = tick;
             buttonState = level;
             console.log(`🔘 GPIO 17 changed to ${level} at ${tick} microseconds`);
-
+            try {
+                const stats = await generateStates(5);
+                console.log("計算完成:", stats);
+            } catch (err) {
+                console.error("程式錯誤:", err);
+            } finally {
+                busy = false;
+            }
             // 這裡可以放自定義邏輯，例如：
             // 執行 Modbus 測試、發送 WebSocket 事件、或呼叫內部函式
         });
