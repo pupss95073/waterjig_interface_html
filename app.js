@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 
 // 全局狀態
 let buttonAEnabled = false;
+let scanMode = false;
 let lastStats = null;
 let isGenerating = false; // 新增忙碌標誌，防止重複觸發
 
@@ -41,21 +42,30 @@ try {
             lastTick = tick;
             buttonState = level;
             console.log(`🔘 GPIO 17 changed to ${level} at ${tick} microseconds`);
-            
+
             // 當按鈕按下時（level = 0）開始處理
             if (level === 0) {
-                // 如果已經在生成數據中，則忽略這次觸發
+                // 如果已經在生成數據中，則忽略此次觸發
                 if (isGenerating) {
                     console.log('正在處理中，忽略此次觸發');
                     return;
                 }
 
+                // 檢查是否已有測試結果未儲存
+                if (lastStats !== null) {
+                    // 如果有未儲存的測試結果，設置狀態讓前端開啟 modal
+                    console.log('有未儲存的測試結果，開啟儲存視窗');
+                    scanMode = true;
+                    buttonAEnabled = true;
+                    return;
+                }
+
+                // 如果沒有未儲存的測試結果，執行新的測試
                 // 設置忙碌標誌
                 isGenerating = true;
                 // 禁用按鈕 A
                 buttonAEnabled = false;
-                lastStats = null;
-                
+
                 try {
                     const stats = await generateStates(5);
                     console.log("計算完成:", stats);
@@ -103,13 +113,21 @@ app.get('/', (req, res) => {
 // 獲取按鈕狀態和xm125測試數據
 // TODO:將此api改為通用版本，json格式包含按鈕名稱與對應狀態與數據
 app.get('/api/button-a-status', (req, res) => {
-    res.json({
+    // 先準備回應資料
+    const responseData = {
         enabled: buttonAEnabled,
         stats: lastStats,
-        isGenerating: isGenerating  // 加入生成狀態
-    });
-});
+        isGenerating: isGenerating,
+        scanMode: scanMode
+    };
 
+    // 發送回應後將 scanMode 重置為 false
+    if (scanMode) {
+        scanMode = false;  // 重置 scanMode
+    }
+
+    res.json(responseData);
+});
 // 讀取掃描資料
 app.get('/api/scan-data', async (req, res) => {
     try {
@@ -177,7 +195,7 @@ app.post('/api/scan-data', async (req, res) => {
         // 儲存完成後，重置按鈕狀態和測試結果
         buttonAEnabled = false;  // 禁用按鈕
         lastStats = null;        // 清空測試結果
-
+        scanMode = false;      // 離開掃碼模式
         res.json(newData);
     } catch (error) {
         console.error('Error saving scan data:', error);
