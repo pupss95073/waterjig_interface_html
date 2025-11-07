@@ -3,3 +3,5 @@ node_modules
 # 掃碼數據目錄
 data/
 data/scan_data.json
+pigpio-master/
+master.zip

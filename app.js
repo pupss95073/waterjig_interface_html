@@ -6,6 +6,53 @@ const fs = require('fs').promises;
 const app = express();
 const port = process.env.PORT || 3000;
 
+// GPIO 相關變數
+let Gpio;
+let button;
+let buttonState = 0;
+let lastTick = 0;
+
+// 初始化 GPIO
+try {
+    // 檢查是否為 root 使用者
+    if (process.getuid && process.getuid() === 0) {
+        Gpio = require('pigpio').Gpio;
+        
+        // 設定 GPIO 17 為輸入，並啟用內部上拉電阻
+        button = new Gpio(17, {
+            mode: Gpio.INPUT,
+            pullUpDown: Gpio.PUD_UP,
+            alert: true // 啟用中斷偵測
+        });
+
+        // 使用 pigpio 的 alertOnChange 來監聽腳位變化
+        button.on('alert', (level, tick) => {
+            // 去彈跳：忽略 10ms 內的重複觸發
+            if (tick - lastTick < 10000) { // 轉換為微秒
+                return;
+            }
+            
+            lastTick = tick;
+            buttonState = level;
+            console.log(`🔘 GPIO 17 changed to ${level} at ${tick} microseconds`);
+
+            // 這裡可以放自定義邏輯，例如：
+            // 執行 Modbus 測試、發送 WebSocket 事件、或呼叫內部函式
+        });
+
+        console.log('GPIO 初始化成功');
+    } else {
+        console.warn('警告：需要 root 權限才能使用 GPIO');
+        console.warn('請使用 sudo node app.js 執行程式');
+    }
+} catch (error) {
+    console.error('GPIO 初始化失敗:', error.message);
+    console.warn('請確認以下事項：');
+    console.warn('1. 使用 sudo node app.js 執行程式');
+    console.warn('2. 已安裝 pigpio: sudo apt-get install pigpio');
+    console.warn('3. pigpio 守護進程已啟動: sudo pigpiod');
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -75,12 +122,12 @@ app.post('/api/scan-data', async (req, res) => {
             scanResult,
             timestamp: now.toISOString().replace('Z', '+08:00')
         };
-        
+
         existingData.unshift(newData);
 
         // 儲存資料
         await fs.writeFile(dataPath, JSON.stringify(existingData, null, 2));
-        
+
         res.json(newData);
     } catch (error) {
         console.error('Error saving scan data:', error);
@@ -105,7 +152,7 @@ app.delete('/api/scan-data/:index', async (req, res) => {
     try {
         const index = parseInt(req.params.index);
         const dataPath = path.join(__dirname, 'data', 'scan_data.json');
-        
+
         let existingData = [];
         try {
             const data = await fs.readFile(dataPath, 'utf8');
