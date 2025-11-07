@@ -133,7 +133,7 @@ app.get('/api/scan-data', async (req, res) => {
 // 儲存掃描資料
 app.post('/api/scan-data', async (req, res) => {
     try {
-        const { button, scanResult } = req.body;
+        const { button, scanResult, stats } = req.body;
         if (!button || !scanResult) {
             return res.status(400).json({ error: '缺少必要資料' });
         }
@@ -164,6 +164,7 @@ app.post('/api/scan-data', async (req, res) => {
         const newData = {
             button,
             scanResult,
+            stats,  // 加入 xm125 測試結果
             timestamp: now.toISOString().replace('Z', '+08:00')
         };
 
@@ -171,6 +172,10 @@ app.post('/api/scan-data', async (req, res) => {
 
         // 儲存資料
         await fs.writeFile(dataPath, JSON.stringify(existingData, null, 2));
+
+        // 儲存完成後，重置按鈕狀態和測試結果
+        buttonAEnabled = false;  // 禁用按鈕
+        lastStats = null;        // 清空測試結果
 
         res.json(newData);
     } catch (error) {

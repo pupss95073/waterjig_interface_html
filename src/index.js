@@ -53,19 +53,24 @@
                             this.buttonAEnabled = data.enabled;
                             if (data.enabled && data.stats) {
                                 this.stats = data.stats;
+                                // 只有在有測試結果時才顯示綠色
+                                this.buttons[0].class = 'btn-success';
+                            } else {
+                                // 根據按鈕狀態顯示藍色或灰色
+                                this.buttons[0].class = this.buttonAEnabled ? 'btn-primary' : 'btn-secondary';
                             }
-                            
-                            // 更新按鈕 A 的樣式
-                            this.buttons[0].class = this.buttonAEnabled ? 'btn-success' : 'btn-secondary';
                         } catch (error) {
                             console.error('Error polling button status:', error);
                         }
                     }, 1000);
                 },
                 buttonClick(buttonName) {
-                    // 如果是按鈕 A 且未啟用，則不處理
-                    if (buttonName === 'A' && !this.buttonAEnabled) {
-                        return;
+                    // 如果是按鈕 A
+                    if (buttonName === 'A') {
+                        // 如果按鈕未啟用或沒有測試結果，則不處理
+                        if (!this.buttonAEnabled || !this.stats) {
+                            return;
+                        }
                     }
 
                     this.lastClicked = `Button ${buttonName}`;
@@ -96,7 +101,8 @@
                             },
                             body: JSON.stringify({
                                 button: this.currentButton,
-                                scanResult: this.scanInput.trim()
+                                scanResult: this.scanInput.trim(),
+                                stats: this.stats  // 加入 xm125 測試結果
                             })
                         });
 
@@ -108,6 +114,9 @@
                         
                         // 清空輸入框並關閉 modal
                         this.scanInput = '';
+                        this.stats = null; // 清空測試結果
+                        this.buttonAEnabled = false; // 禁用按鈕
+                        this.buttons[0].class = 'btn-secondary'; // 將按鈕顏色改為灰色
                         this.modal.hide();
                     } catch (error) {
                         console.error('儲存掃碼數據失敗：', error);
