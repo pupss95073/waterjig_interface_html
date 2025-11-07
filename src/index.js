@@ -145,10 +145,10 @@ createApp({
                 this.modal.hide();
 
                 // 顯示成功訊息
-                alert('測試結果儲存成功！');
+                console.log('測試結果儲存成功！');
             } catch (error) {
                 console.error('儲存掃碼數據失敗：', error);
-                alert('儲存資料時發生錯誤，請稍後再試');
+                console.log('儲存資料時發生錯誤，請稍後再試');
             }
         },
         async deleteScanData(index) {
